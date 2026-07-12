@@ -1,4 +1,6 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import {  useEffect, useMemo, useState } from "react";
+
+import type { FormEvent } from "react";
 import backendApi from "../../api/backendApi";
 import StatusBadge from "../../components/master/StatusBadge";
 import type {

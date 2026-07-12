@@ -1,4 +1,6 @@
-export type CategoryStatus = "active" | "inactive";
+export type MasterStatus = "active" | "inactive";
+
+export type CategoryStatus = MasterStatus;
 
 export interface Category {
   _id: string;
@@ -21,12 +23,26 @@ export interface CategoryForm {
 export interface CategoryListResponse {
   success: boolean;
   data: Category[];
+  message?: string;
 }
 
 export interface SingleCategoryResponse {
   success: boolean;
   message: string;
   data: Category;
+}
+
+export interface ListResponse<T> {
+  success: boolean;
+  data: T[];
+  count?: number;
+  message?: string;
+}
+
+export interface SingleResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
 }
 
 export interface RefData {
@@ -44,7 +60,10 @@ export interface SubCategory {
   image?: string;
   displayOrder: number;
   status: MasterStatus;
+  createdAt?: string;
+  updatedAt?: string;
 }
+
 export interface SubCategoryForm {
   categoryId: string;
   name: string;
@@ -52,11 +71,6 @@ export interface SubCategoryForm {
   displayOrder: number;
   status: MasterStatus;
 }
-export interface ListResponse<T> {
-  success: boolean;
-  data: T[];
-}
-
 
 export interface SubSubCategory {
   _id: string;
@@ -79,7 +93,6 @@ export interface SubSubCategoryForm {
   displayOrder: number;
   status: MasterStatus;
 }
-
 
 export interface Item {
   _id: string;
@@ -127,9 +140,4 @@ export interface BrandForm {
   description: string;
   displayOrder: number;
   status: MasterStatus;
-}
-
-export interface ListResponse<T> {
-  success: boolean;
-  data: T[];
 }

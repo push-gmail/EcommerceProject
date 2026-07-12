@@ -1,18 +1,18 @@
 import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import {  useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import backendApi from "../../api/backendApi";
 
-const clearMerchantBrowserCookiesFallback = () => {
-  ["merchantAccessToken", "merchantRefreshToken"].forEach((cookieName) => {
-    document.cookie = `${cookieName}=; Max-Age=0; path=/`;
-    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-  });
-};
+// const clearMerchantBrowserCookiesFallback = () => {
+//   ["merchantAccessToken", "merchantRefreshToken"].forEach((cookieName) => {
+//     document.cookie = `${cookieName}=; Max-Age=0; path=/`;
+//     document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+//   });
+// };
 
 export default function MerchantLogin() {
   const navigate = useNavigate();
-  const location = useLocation();
+  // const location = useLocation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

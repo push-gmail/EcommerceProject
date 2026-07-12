@@ -1,11 +1,11 @@
 import {
-  Bell,
+
   ChevronRight,
-  CreditCard,
+  
   Gift,
-  Home,
+  
   Package,
-  Star,
+  
   User,
   WalletCards,
 } from "lucide-react";

@@ -36,6 +36,7 @@ type GroceryMenuHeaderProps = {
   handleCategoryClick: (category: Category) => void;
   handleSubCategoryClick: (subCategory: SubCategory) => void;
   handleSubSubCategoryClick: (subSubCategory: SubSubCategory) => void;
+  handleItemClick: (item: any) => void;
 };
 
 export default function GroceryMenuHeader({

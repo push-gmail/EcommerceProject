@@ -113,7 +113,10 @@ const csvEscape = (value: string | number | null | undefined) => {
   return `"${stringValue.replace(/"/g, '""')}"`;
 };
 
-const downloadCsvFile = (filename: string, rows: Array<Array<string | number>>) => {
+const downloadCsvFile = (
+  filename: string,
+  rows: Array<Array<string | number>>
+) => {
   const csvContent = rows
     .map((row) => row.map((cell) => csvEscape(cell)).join(","))
     .join("\n");
@@ -136,21 +139,38 @@ const downloadCsvFile = (filename: string, rows: Array<Array<string | number>>) 
   URL.revokeObjectURL(url);
 };
 
-const normalizeStockRows = (rows: any[]): GroupedStockRow[] => {
-  return safeArray(rows).map((row: any) => {
-    const variants = safeArray(row.variants).map((variant: any) => {
-      const packets = Number(variant.packets || 0);
+const normalizeStockRows = (rows: unknown[]): GroupedStockRow[] => {
+  return safeArray<unknown>(rows).map((rawRow) => {
+    const row = rawRow as Partial<GroupedStockRow> & {
+      name?: string;
+      variants?: unknown[];
+    };
 
-      return {
-        _id: String(variant._id || `${row._id}-${variant.variant}`),
-        variant: String(variant.variant || "-"),
-        quantityInPackets: String(variant.quantityInPackets || ""),
-        unit: String(variant.unit || ""),
-        packets,
-        stockStatus: variant.stockStatus || getStockStatus(packets),
-        merchants: safeArray(variant.merchants),
-      };
-    });
+    const variants: StockVariant[] = safeArray<unknown>(row.variants).map(
+      (rawVariant) => {
+        const variant = rawVariant as Partial<StockVariant> & {
+          merchants?: unknown[];
+        };
+
+        const packets = Number(variant.packets || 0);
+
+        return {
+          _id: String(variant._id || `${row._id}-${variant.variant}`),
+          variant: String(variant.variant || "-"),
+          quantityInPackets: String(variant.quantityInPackets || ""),
+          unit: String(variant.unit || ""),
+          packets,
+          stockStatus:
+            variant.stockStatus === "in-stock" ||
+            variant.stockStatus === "out-of-stock"
+              ? variant.stockStatus
+              : getStockStatus(packets),
+          merchants: safeArray<MerchantStockDetail>(
+            variant.merchants as MerchantStockDetail[]
+          ),
+        };
+      }
+    );
 
     const totalPackets =
       Number(row.totalPackets) ||
@@ -163,7 +183,10 @@ const normalizeStockRows = (rows: any[]): GroupedStockRow[] => {
       brandId: String(row.brandId || ""),
       brandName: String(row.brandName || "Brand not found"),
       totalPackets,
-      stockStatus: row.stockStatus || getStockStatus(totalPackets),
+      stockStatus:
+        row.stockStatus === "in-stock" || row.stockStatus === "out-of-stock"
+          ? row.stockStatus
+          : getStockStatus(totalPackets),
       variants,
     };
   });
@@ -197,7 +220,8 @@ export default function MyStocks() {
         `/master/get-all-stocks?t=${Date.now()}`
       );
 
-      setStocks(normalizeStockRows(res.data.data || []));
+      const responseData = Array.isArray(res.data?.data) ? res.data.data : [];
+      setStocks(normalizeStockRows(responseData));
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to fetch stock records");
       setStocks([]);
@@ -213,8 +237,8 @@ export default function MyStocks() {
   const filteredStocks = useMemo(() => {
     const q = search.trim().toLowerCase();
 
-    return safeArray(stocks).filter((stock) => {
-      const variants = safeArray(stock.variants);
+    return safeArray<GroupedStockRow>(stocks).filter((stock) => {
+      const variants = safeArray<StockVariant>(stock.variants);
 
       const matchesStock =
         stockFilter === "all" ? true : stock.stockStatus === stockFilter;
@@ -225,7 +249,9 @@ export default function MyStocks() {
         .toLowerCase();
 
       const merchantText = variants
-        .flatMap((variant) => safeArray(variant.merchants))
+        .flatMap((variant) =>
+          safeArray<MerchantStockDetail>(variant.merchants)
+        )
         .map((detail) => {
           return `${detail.merchant?.name || ""} ${
             detail.merchant?.shopName || ""
@@ -292,7 +318,7 @@ export default function MyStocks() {
     ];
 
     filteredStocks.forEach((stock) => {
-      const variants = safeArray(stock.variants);
+      const variants = safeArray<StockVariant>(stock.variants);
 
       if (variants.length === 0) {
         rows.push([
@@ -321,7 +347,7 @@ export default function MyStocks() {
       }
 
       variants.forEach((variant) => {
-        const merchants = safeArray(variant.merchants);
+        const merchants = safeArray<MerchantStockDetail>(variant.merchants);
 
         if (merchants.length === 0) {
           rows.push([
@@ -503,7 +529,9 @@ export default function MyStocks() {
 
                 {!loading &&
                   filteredStocks.map((stock) => {
-                    const variantCount = safeArray(stock.variants).length;
+                    const variantCount = safeArray<StockVariant>(
+                      stock.variants
+                    ).length;
 
                     return (
                       <tr
@@ -549,7 +577,9 @@ export default function MyStocks() {
                             onClick={() =>
                               setSelectedItem({
                                 ...stock,
-                                variants: safeArray(stock.variants),
+                                variants: safeArray<StockVariant>(
+                                  stock.variants
+                                ),
                               })
                             }
                             className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-xs font-black text-cyan-100 transition hover:bg-cyan-400/20"
@@ -615,60 +645,65 @@ export default function MyStocks() {
                   </thead>
 
                   <tbody className="divide-y divide-emerald-400/10">
-                    {safeArray(selectedItem.variants).map((variant, index) => (
-                      <tr
-                        key={variant._id}
-                        className="transition hover:bg-emerald-400/5"
-                      >
-                        <td className="p-4 font-bold text-slate-300">
-                          {index + 1}
-                        </td>
+                    {safeArray<StockVariant>(selectedItem.variants).map(
+                      (variant, index) => (
+                        <tr
+                          key={variant._id}
+                          className="transition hover:bg-emerald-400/5"
+                        >
+                          <td className="p-4 font-bold text-slate-300">
+                            {index + 1}
+                          </td>
 
-                        <td className="p-4">
-                          <p className="font-black text-white">
-                            {variant.variant}
-                          </p>
+                          <td className="p-4">
+                            <p className="font-black text-white">
+                              {variant.variant}
+                            </p>
 
-                          <p className="text-xs text-slate-500">
-                            Unit: {valueOrDash(variant.unit)}
-                          </p>
-                        </td>
+                            <p className="text-xs text-slate-500">
+                              Unit: {valueOrDash(variant.unit)}
+                            </p>
+                          </td>
 
-                        <td className="p-4">
-                          <p
-                            className={`text-2xl font-black ${
-                              Number(variant.packets) > 0
-                                ? "text-emerald-200"
-                                : "text-rose-200"
-                            }`}
-                          >
-                            {Number(variant.packets) || 0}
-                          </p>
-                        </td>
+                          <td className="p-4">
+                            <p
+                              className={`text-2xl font-black ${
+                                Number(variant.packets) > 0
+                                  ? "text-emerald-200"
+                                  : "text-rose-200"
+                              }`}
+                            >
+                              {Number(variant.packets) || 0}
+                            </p>
+                          </td>
 
-                        <td className="p-4">
-                          <StockBadge status={variant.stockStatus} />
-                        </td>
+                          <td className="p-4">
+                            <StockBadge status={variant.stockStatus} />
+                          </td>
 
-                        <td className="p-4">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSelectedVariant({
-                                ...variant,
-                                merchants: safeArray(variant.merchants),
-                              })
-                            }
-                            className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-xs font-black text-cyan-100 transition hover:bg-cyan-400/20"
-                          >
-                            <Eye size={14} />
-                            View
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                          <td className="p-4">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSelectedVariant({
+                                  ...variant,
+                                  merchants: safeArray<MerchantStockDetail>(
+                                    variant.merchants
+                                  ),
+                                })
+                              }
+                              className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-xs font-black text-cyan-100 transition hover:bg-cyan-400/20"
+                            >
+                              <Eye size={14} />
+                              View
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    )}
 
-                    {safeArray(selectedItem.variants).length === 0 && (
+                    {safeArray<StockVariant>(selectedItem.variants).length ===
+                      0 && (
                       <tr>
                         <td
                           colSpan={5}
@@ -701,7 +736,11 @@ export default function MyStocks() {
                 <DetailBox label="Packets" value={selectedVariant.packets} />
                 <DetailBox
                   label="Merchants"
-                  value={safeArray(selectedVariant.merchants).length}
+                  value={
+                    safeArray<MerchantStockDetail>(
+                      selectedVariant.merchants
+                    ).length
+                  }
                 />
               </div>
 
@@ -719,67 +758,68 @@ export default function MyStocks() {
                   </thead>
 
                   <tbody className="divide-y divide-cyan-400/10">
-                    {safeArray(selectedVariant.merchants).map(
-                      (detail, index) => (
-                        <tr
-                          key={`${detail.productId}-${index}`}
-                          className="transition hover:bg-cyan-400/5"
-                        >
-                          <td className="p-4 font-bold text-slate-300">
-                            {index + 1}
-                          </td>
+                    {safeArray<MerchantStockDetail>(
+                      selectedVariant.merchants
+                    ).map((detail, index) => (
+                      <tr
+                        key={`${detail.productId}-${index}`}
+                        className="transition hover:bg-cyan-400/5"
+                      >
+                        <td className="p-4 font-bold text-slate-300">
+                          {index + 1}
+                        </td>
 
-                          <td className="p-4">
-                            <p className="font-black text-white">
-                              {detail.merchant?.name || "Merchant not found"}
-                            </p>
+                        <td className="p-4">
+                          <p className="font-black text-white">
+                            {detail.merchant?.name || "Merchant not found"}
+                          </p>
 
-                            <p className="text-xs text-slate-500">
-                              {detail.merchant?.email || "-"}
-                            </p>
-                          </td>
+                          <p className="text-xs text-slate-500">
+                            {detail.merchant?.email || "-"}
+                          </p>
+                        </td>
 
-                          <td className="p-4 font-bold text-emerald-100">
-                            {detail.merchant?.shopName || "-"}
-                          </td>
+                        <td className="p-4 font-bold text-emerald-100">
+                          {detail.merchant?.shopName || "-"}
+                        </td>
 
-                          <td className="p-4">
-                            <p className="font-bold text-white">
-                              {detail.productName}
-                            </p>
+                        <td className="p-4">
+                          <p className="font-bold text-white">
+                            {detail.productName}
+                          </p>
 
-                            <p className="text-xs text-slate-500">
-                              Brand: {detail.brand?.name || "-"}
-                            </p>
-                          </td>
+                          <p className="text-xs text-slate-500">
+                            Brand: {detail.brand?.name || "-"}
+                          </p>
+                        </td>
 
-                          <td className="p-4">
-                            <p
-                              className={`text-2xl font-black ${
-                                Number(detail.packets) > 0
-                                  ? "text-emerald-200"
-                                  : "text-rose-200"
-                              }`}
-                            >
-                              {Number(detail.packets) || 0}
-                            </p>
-                          </td>
+                        <td className="p-4">
+                          <p
+                            className={`text-2xl font-black ${
+                              Number(detail.packets) > 0
+                                ? "text-emerald-200"
+                                : "text-rose-200"
+                            }`}
+                          >
+                            {Number(detail.packets) || 0}
+                          </p>
+                        </td>
 
-                          <td className="p-4">
-                            <button
-                              type="button"
-                              onClick={() => setSelectedMerchant(detail)}
-                              className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-xs font-black text-emerald-100 transition hover:bg-emerald-400/20"
-                            >
-                              <Eye size={14} />
-                              View
-                            </button>
-                          </td>
-                        </tr>
-                      )
-                    )}
+                        <td className="p-4">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedMerchant(detail)}
+                            className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-xs font-black text-emerald-100 transition hover:bg-emerald-400/20"
+                          >
+                            <Eye size={14} />
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
 
-                    {safeArray(selectedVariant.merchants).length === 0 && (
+                    {safeArray<MerchantStockDetail>(selectedVariant.merchants)
+                      .length === 0 && (
                       <tr>
                         <td
                           colSpan={6}

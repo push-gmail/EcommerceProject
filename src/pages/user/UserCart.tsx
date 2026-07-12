@@ -3,7 +3,6 @@ import {
   AlertCircle,
   CheckCircle2,
   ChevronLeft,
-  Home,
   Loader2,
   MapPin,
   Minus,
