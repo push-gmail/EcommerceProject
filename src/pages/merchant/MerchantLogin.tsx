@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
-import {  useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import backendApi from "../../api/backendApi";
 
 // const clearMerchantBrowserCookiesFallback = () => {
@@ -12,7 +12,6 @@ import backendApi from "../../api/backendApi";
 
 export default function MerchantLogin() {
   const navigate = useNavigate();
-  // const location = useLocation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,7 +34,7 @@ export default function MerchantLogin() {
   //       clearMerchantBrowserCookiesFallback();
   //     }
   //   };
-
+  //
   //   clearOldMerchantSession();
   // }, []);
 
@@ -72,15 +71,19 @@ export default function MerchantLogin() {
       );
 
       if (!res.data?.success) {
-  throw new Error(res.data?.message || "Merchant login failed");
-}
+        throw new Error(res.data?.message || "Merchant login failed");
+      }
 
-console.log("LOGIN SUCCESS RESPONSE:", res.data);
-console.log("NOW NAVIGATING TO /merchant/dashboard");
+      console.log("LOGIN SUCCESS RESPONSE:", res.data);
+      console.log("NOW NAVIGATING TO /merchant/dashboard");
 
-navigate("/merchant/dashboard", { replace: true });
+      navigate("/merchant/dashboard", { replace: true });
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || "Merchant login failed");
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Merchant login failed"
+      );
     } finally {
       setLoading(false);
     }
@@ -91,6 +94,7 @@ navigate("/merchant/dashboard", { replace: true });
       <div className="pointer-events-none absolute -left-24 top-10 h-80 w-80 rounded-full bg-emerald-400/20 blur-3xl" />
       <div className="pointer-events-none absolute -right-24 top-36 h-96 w-96 rounded-full bg-cyan-400/10 blur-3xl" />
       <div className="pointer-events-none absolute bottom-0 right-1/4 h-72 w-72 rounded-full bg-yellow-300/10 blur-3xl" />
+
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:48px_48px]" />
 
       <div className="relative z-10 w-full max-w-md rounded-[2rem] border border-emerald-400/20 bg-white/10 p-7 shadow-[0_0_60px_rgba(16,185,129,0.20)] backdrop-blur-2xl">
@@ -120,7 +124,10 @@ navigate("/merchant/dashboard", { replace: true });
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-bold text-slate-300">Email Address</label>
+            <label className="mb-2 block text-sm font-bold text-slate-300">
+              Email Address
+            </label>
+
             <input
               type="email"
               value={email}
@@ -132,12 +139,15 @@ navigate("/merchant/dashboard", { replace: true });
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-bold text-slate-300">Password</label>
+            <label className="mb-2 block text-sm font-bold text-slate-300">
+              Password
+            </label>
+
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}   
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Temporary password"
                 autoComplete="current-password"
                 className="w-full rounded-2xl border border-emerald-400/20 bg-black/35 px-4 py-3 pr-20 text-white outline-none placeholder:text-slate-500 transition focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20"
@@ -145,7 +155,7 @@ navigate("/merchant/dashboard", { replace: true });
 
               <button
                 type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
+                onClick={() => setShowPassword((previous) => !previous)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-emerald-200 hover:text-cyan-200"
               >
                 {showPassword ? "Hide" : "Show"}
@@ -164,7 +174,8 @@ navigate("/merchant/dashboard", { replace: true });
 
         <div className="mt-6 rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4">
           <p className="text-xs leading-5 text-amber-100">
-            Use the temporary password sent to your email. After first login, change your password for security.
+            Use the temporary password sent to your email. After first login,
+            change your password for security.
           </p>
         </div>
       </div>

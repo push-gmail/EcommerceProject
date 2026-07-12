@@ -240,6 +240,14 @@ export default function UserLayout() {
     [closeMenu, navigate]
   );
 
+  const handleItemClick = useCallback(
+    (item: Item) => {
+      closeMenu();
+      navigate(`/grocery?itemId=${item._id}`);
+    },
+    [closeMenu, navigate]
+  );
+
   return (
     <div className="min-h-screen bg-[#f1f3f6] text-[#212121]">
       <GroceryHeader
@@ -259,6 +267,7 @@ export default function UserLayout() {
         handleCategoryClick={handleCategoryClick}
         handleSubCategoryClick={handleSubCategoryClick}
         handleSubSubCategoryClick={handleSubSubCategoryClick}
+        handleItemClick={handleItemClick}
       />
 
       <Outlet context={{ search, setSearch, cartCount, setCartCount }} />

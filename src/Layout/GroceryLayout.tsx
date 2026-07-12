@@ -289,11 +289,6 @@ export default function GroceryLayout() {
     [closeMenu, navigate]
   );
 
-  const handleAllCategoriesClick = useCallback(() => {
-    closeMenu();
-    navigate("/grocery");
-  }, [closeMenu, navigate]);
-
   const handleLoginSuccess = useCallback(() => {
     window.dispatchEvent(new CustomEvent("user-login-success"));
   }, []);
@@ -335,7 +330,6 @@ export default function GroceryLayout() {
         handleSubCategoryClick={handleSubCategoryClick}
         handleSubSubCategoryClick={handleSubSubCategoryClick}
         handleItemClick={handleItemClick}
-        onAllCategoriesClick={handleAllCategoriesClick}
       />
 
       {catalogLoading && categories.length === 0 && (
