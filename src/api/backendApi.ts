@@ -1,8 +1,11 @@
 import axios from "axios";
 import type { AxiosError, InternalAxiosRequestConfig } from "axios";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_ORIGIN || "http://localhost:3000/api";
+
 const backendApi = axios.create({
-  baseURL: "http://localhost:3000/api",
+  baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
